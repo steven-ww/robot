@@ -4,11 +4,37 @@
 package za.co.sww.rwars.robot;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import za.co.sww.rwars.robot.service.RobotWarsService;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AppTest {
-    @Test void appHasAGreeting() {
-        App classUnderTest = new App();
-        assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+    
+    @Mock
+    private RobotWarsService mockRobotWarsService;
+    
+    private App app;
+    
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        app = new App(mockRobotWarsService);
+    }
+    
+    @Test
+    void appCanBeCreated() {
+        assertNotNull(app, "app should be created successfully");
+    }
+    
+    @Test
+    void appCreatedWithNullService() {
+        // This test documents that the App constructor accepts null
+        // In a real implementation, we might want to validate this
+        assertDoesNotThrow(() -> {
+            new App(null);
+        }, "app constructor should not throw with null service");
     }
 }

@@ -3,12 +3,247 @@
  */
 package za.co.sww.rwars.robot;
 
-public class App {
-    public String getGreeting() {
-        return "Hello World!";
-    }
+import za.co.sww.rwars.robot.client.RobotWarsApiClient;
+import za.co.sww.rwars.robot.client.RobotWarsApiClientImpl;
+import za.co.sww.rwars.robot.client.RobotWarsApiException;
+import za.co.sww.rwars.robot.model.Battle;
+import za.co.sww.rwars.robot.model.Robot;
+import za.co.sww.rwars.robot.service.RobotWarsService;
 
+import java.util.Scanner;
+
+/**
+ * Main application class for Robot Wars game client.
+ */
+public class App {
+    
+    private final RobotWarsService robotWarsService;
+    private final Scanner scanner;
+    
+    /**
+     * Creates a new App instance.
+     * 
+     * @param robotWarsService the service to handle robot wars operations
+     */
+    public App(RobotWarsService robotWarsService) {
+        this.robotWarsService = robotWarsService;
+        this.scanner = new Scanner(System.in);
+    }
+    
+    /**
+     * Main entry point for the application.
+     * 
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+        System.out.println("Robot Wars Game Client");
+        System.out.println("======================\n");
+        
+        try {
+            // Initialize with actual API client implementation
+            RobotWarsApiClient apiClient = new RobotWarsApiClientImpl();
+            RobotWarsService service = new RobotWarsService(apiClient);
+            App app = new App(service);
+            app.run();
+        } catch (Exception e) {
+            System.err.println("Failed to start application: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Runs the main application loop.
+     */
+    public void run() {
+        boolean running = true;
+        
+        while (running) {
+            displayMenu();
+            
+            try {
+                int choice = Integer.parseInt(scanner.nextLine());
+                
+                switch (choice) {
+                    case 1 -> createBattle();
+                    case 2 -> registerRobot();
+                    case 3 -> startBattle();
+                    case 4 -> getBattleStatus();
+                    case 5 -> getRobotStatus();
+                    case 0 -> {
+                        running = false;
+                        System.out.println("Goodbye!");
+                    }
+                    default -> System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            } catch (Exception e) {
+                System.err.println("An error occurred: " + e.getMessage());
+            }
+            
+            if (running) {
+                System.out.println("\nPress Enter to continue...");
+                scanner.nextLine();
+            }
+        }
+    }
+    
+    /**
+     * Displays the main menu options.
+     */
+    private void displayMenu() {
+        System.out.println("\n=== Robot Wars Menu ===");
+        System.out.println("1. Create Battle");
+        System.out.println("2. Register Robot");
+        System.out.println("3. Start Battle");
+        System.out.println("4. Get Battle Status");
+        System.out.println("5. Get Robot Status");
+        System.out.println("0. Exit");
+        System.out.print("\nChoose an option: ");
+    }
+    
+    /**
+     * Creates a new battle.
+     */
+    private void createBattle() {
+        try {
+            System.out.println("\nCreating new battle...");
+            Battle battle = robotWarsService.createBattle();
+            System.out.println("Battle created successfully!");
+            System.out.println("Battle ID: " + battle.battleId());
+            System.out.println("Status: " + battle.status());
+            System.out.println("Created at: " + battle.createdAt());
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to create battle: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+        }
+    }
+    
+    /**
+     * Registers a robot with a battle.
+     */
+    private void registerRobot() {
+        try {
+            System.out.print("\nEnter battle ID: ");
+            String battleId = scanner.nextLine().trim();
+            
+            if (battleId.isEmpty()) {
+                System.out.println("Battle ID cannot be empty.");
+                return;
+            }
+            
+            System.out.print("Enter robot name: ");
+            String robotName = scanner.nextLine().trim();
+            
+            if (robotName.isEmpty()) {
+                System.out.println("Robot name cannot be empty.");
+                return;
+            }
+            
+            System.out.println("Registering robot '" + robotName + "' to battle " + battleId + "...");
+            Robot robot = robotWarsService.registerRobot(battleId, robotName);
+            System.out.println("Robot registered successfully!");
+            System.out.println("Robot ID: " + robot.robotId());
+            System.out.println("Name: " + robot.name());
+            System.out.println("Status: " + robot.status());
+            System.out.println("Hit Points: " + robot.hitPoints());
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to register robot: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+        }
+    }
+    
+    /**
+     * Starts a battle.
+     */
+    private void startBattle() {
+        try {
+            System.out.print("\nEnter battle ID to start: ");
+            String battleId = scanner.nextLine().trim();
+            
+            if (battleId.isEmpty()) {
+                System.out.println("Battle ID cannot be empty.");
+                return;
+            }
+            
+            System.out.println("Starting battle " + battleId + "...");
+            Battle battle = robotWarsService.startBattle(battleId);
+            System.out.println("Battle started successfully!");
+            System.out.println("Battle ID: " + battle.battleId());
+            System.out.println("Status: " + battle.status());
+            System.out.println("Robots in battle: " + battle.robotIds().size());
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to start battle: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+        }
+    }
+    
+    /**
+     * Gets the status of a battle.
+     */
+    private void getBattleStatus() {
+        try {
+            System.out.print("\nEnter battle ID: ");
+            String battleId = scanner.nextLine().trim();
+            
+            if (battleId.isEmpty()) {
+                System.out.println("Battle ID cannot be empty.");
+                return;
+            }
+            
+            System.out.println("Getting battle status...");
+            Battle battle = robotWarsService.getBattle(battleId);
+            System.out.println("Battle Status:");
+            System.out.println("  ID: " + battle.battleId());
+            System.out.println("  Status: " + battle.status());
+            System.out.println("  Created: " + battle.createdAt());
+            System.out.println("  Robots: " + battle.robotIds().size());
+            if (battle.winner() != null) {
+                System.out.println("  Winner: " + battle.winner());
+            }
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to get battle status: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+        }
+    }
+    
+    /**
+     * Gets the status of a robot.
+     */
+    private void getRobotStatus() {
+        try {
+            System.out.print("\nEnter robot ID: ");
+            String robotId = scanner.nextLine().trim();
+            
+            if (robotId.isEmpty()) {
+                System.out.println("Robot ID cannot be empty.");
+                return;
+            }
+            
+            System.out.println("Getting robot status...");
+            Robot robot = robotWarsService.getRobotState(robotId);
+            System.out.println("Robot Status:");
+            System.out.println("  ID: " + robot.robotId());
+            System.out.println("  Name: " + robot.name());
+            System.out.println("  Status: " + robot.status());
+            System.out.println("  Hit Points: " + robot.hitPoints());
+            System.out.println("  Health: " + String.format("%.1f%%", robot.getHealthPercentage()));
+            System.out.println("  Position: (" + robot.position().x() + ", " + robot.position().y() + ")");
+            System.out.println("  Heading: " + robot.heading());
+            System.out.println("  Battle ID: " + robot.battleId());
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to get robot status: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+        }
     }
 }
