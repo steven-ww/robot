@@ -2,9 +2,9 @@ package za.co.sww.rwars.robot.client;
 
 import za.co.sww.rwars.robot.model.Battle;
 import za.co.sww.rwars.robot.model.Robot;
-import za.co.sww.rwars.robot.model.Position;
-
-import java.util.List;
+import za.co.sww.rwars.robot.model.RadarResponse;
+import za.co.sww.rwars.robot.model.LaserResponse;
+import za.co.sww.rwars.robot.model.CreateBattleRequest;
 
 /**
  * Client interface for interacting with the Robot Wars API.
@@ -14,10 +14,11 @@ public interface RobotWarsApiClient {
     /**
      * Creates a new battle.
      * 
+     * @param request the battle creation request
      * @return the created battle
      * @throws RobotWarsApiException if the API call fails
      */
-    Battle createBattle() throws RobotWarsApiException;
+    Battle createBattle(CreateBattleRequest request) throws RobotWarsApiException;
     
     /**
      * Gets battle information by ID.
@@ -41,44 +42,47 @@ public interface RobotWarsApiClient {
     /**
      * Gets the current robot state.
      * 
+     * @param battleId the battle ID
      * @param robotId the robot ID
      * @return the robot state
      * @throws RobotWarsApiException if the API call fails
      */
-    Robot getRobotState(String robotId) throws RobotWarsApiException;
+    Robot getRobotState(String battleId, String robotId) throws RobotWarsApiException;
     
     /**
      * Moves the robot in the specified direction.
      * 
+     * @param battleId the battle ID
      * @param robotId the robot ID
-     * @param direction the direction to move (0-359 degrees)
-     * @param distance the distance to move
+     * @param direction the direction to move (string like "NORTH", "SOUTH", etc.)
+     * @param blocks the number of blocks to move
      * @return the updated robot state
      * @throws RobotWarsApiException if the API call fails
      */
-    Robot moveRobot(String robotId, int direction, int distance) throws RobotWarsApiException;
+    Robot moveRobot(String battleId, String robotId, String direction, int blocks) throws RobotWarsApiException;
     
     /**
      * Scans the arena using radar.
      * 
+     * @param battleId the battle ID
      * @param robotId the robot ID
-     * @param direction the direction to scan (0-359 degrees)
      * @param range the scan range
-     * @return list of detected robots
+     * @return radar scan response with detections
      * @throws RobotWarsApiException if the API call fails
      */
-    List<Robot> scanRadar(String robotId, int direction, int range) throws RobotWarsApiException;
+    RadarResponse scanRadar(String battleId, String robotId, int range) throws RobotWarsApiException;
     
     /**
      * Fires a laser at the specified target.
      * 
+     * @param battleId the battle ID
      * @param robotId the robot ID
-     * @param direction the direction to fire (0-359 degrees)
+     * @param direction the direction to fire (string like "NORTH", "SOUTH", etc.)
      * @param range the firing range
-     * @return true if the laser hit a target
+     * @return laser response with hit information
      * @throws RobotWarsApiException if the API call fails
      */
-    boolean fireLaser(String robotId, int direction, int range) throws RobotWarsApiException;
+    LaserResponse fireLaser(String battleId, String robotId, String direction, int range) throws RobotWarsApiException;
     
     /**
      * Starts a battle.

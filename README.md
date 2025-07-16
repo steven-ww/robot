@@ -34,6 +34,7 @@ This project represents a robot that will play a game of robot wars by calling A
 - **Gradle**: Build automation and dependency management
 - **JUnit 5**: Unit testing framework
 - **Mockito**: Mocking framework for unit testing
+- **PMD**: Static code analysis tool
 - **Java Records**: Modern data modeling
 - **Java HTTP Client**: Built-in HTTP client for API communication
 - **Jackson**: JSON processing and serialization
@@ -166,6 +167,20 @@ Created at: 2024-01-01T10:00:00Z
 ./gradlew test --tests "za.co.sww.rwars.robot.model.BattleTest"
 ```
 
+### Code Quality
+
+```bash
+# Run PMD static analysis
+./gradlew pmdMain pmdTest
+
+# Run full build including tests and PMD
+./gradlew build
+
+# Check PMD reports
+open app/build/reports/pmd/main.html
+open app/build/reports/pmd/test.html
+```
+
 ### Contributing
 
 1. Create unit tests for new functionality
@@ -188,6 +203,8 @@ Created at: 2024-01-01T10:00:00Z
 - Comprehensive unit test coverage
 - Jackson JSON processing
 - Java 21 HTTP client integration
+- **PMD static code analysis**
+- Code quality checks and standards
 
 ### Pending 🚧
 - Robot movement and combat logic

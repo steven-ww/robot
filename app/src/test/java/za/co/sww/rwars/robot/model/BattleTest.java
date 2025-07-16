@@ -1,7 +1,7 @@
 package za.co.sww.rwars.robot.model;
 
 import org.junit.jupiter.api.Test;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,14 +10,16 @@ class BattleTest {
 
     @Test
     void battleCanBeCreated() {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
+        Robot robot1 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-123");
+        Robot robot2 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-123");
         Battle battle = new Battle(
                 "battle-123",
                 "WAITING",
                 now,
                 null,
                 null,
-                List.of("robot-1", "robot-2"),
+                List.of(robot1, robot2),
                 null
         );
 
@@ -25,13 +27,18 @@ class BattleTest {
         assertEquals("battle-123", battle.battleId());
         assertEquals("WAITING", battle.status());
         assertEquals(now, battle.createdAt());
-        assertEquals(2, battle.robotIds().size());
+        assertEquals(2, battle.getRobotIds().size());
         assertNull(battle.winner());
     }
 
     @Test
     void battleStatusCheckers() {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
+        
+        Robot robot1 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-1");
+        Robot robot2 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-2");
+        Robot robot3 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-3");
+        Robot robot4 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-3");
         
         Battle waitingBattle = new Battle(
                 "battle-1",
@@ -39,7 +46,7 @@ class BattleTest {
                 now,
                 null,
                 null,
-                List.of("robot-1"),
+                List.of(robot1),
                 null
         );
         
@@ -47,9 +54,9 @@ class BattleTest {
                 "battle-2",
                 "ACTIVE",
                 now,
-                Instant.now(),
+                LocalDateTime.now(),
                 null,
-                List.of("robot-1", "robot-2"),
+                List.of(robot1, robot2),
                 null
         );
         
@@ -57,9 +64,9 @@ class BattleTest {
                 "battle-3",
                 "FINISHED",
                 now,
-                Instant.now(),
-                Instant.now(),
-                List.of("robot-1", "robot-2"),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                List.of(robot3, robot4),
                 "robot-1"
         );
 
@@ -86,20 +93,22 @@ class BattleTest {
         assertNotNull(battle.createdAt());
         assertNull(battle.startedAt());
         assertNull(battle.finishedAt());
-        assertEquals(0, battle.robotIds().size());
+        assertEquals(0, battle.getRobotIds().size());
         assertNull(battle.winner());
     }
 
     @Test
     void battleWithWinner() {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
+        Robot robot1 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-123");
+        Robot robot2 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-123");
         Battle battle = new Battle(
                 "battle-123",
                 "FINISHED",
                 now,
-                Instant.now(),
-                Instant.now(),
-                List.of("robot-1", "robot-2"),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                List.of(robot1, robot2),
                 "robot-1"
         );
 
@@ -109,14 +118,16 @@ class BattleTest {
 
     @Test
     void battleWithoutWinner() {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
+        Robot robot1 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-123");
+        Robot robot2 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, "battle-123");
         Battle battle = new Battle(
                 "battle-123",
                 "WAITING",
                 now,
                 null,
                 null,
-                List.of("robot-1", "robot-2"),
+                List.of(robot1, robot2),
                 null
         );
 

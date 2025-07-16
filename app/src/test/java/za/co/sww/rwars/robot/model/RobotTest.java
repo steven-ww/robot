@@ -12,8 +12,9 @@ class RobotTest {
         Robot robot = new Robot(
                 "robot-123",
                 "TestBot",
-                position,
-                90,
+                10,
+                20,
+                "EAST",
                 75,
                 100,
                 Robot.RobotStatus.ALIVE,
@@ -24,7 +25,7 @@ class RobotTest {
         assertEquals("robot-123", robot.robotId());
         assertEquals("TestBot", robot.name());
         assertEquals(position, robot.position());
-        assertEquals(90, robot.heading());
+        assertEquals("EAST", robot.heading());
         assertEquals(75, robot.hitPoints());
         assertEquals(100, robot.maxHitPoints());
         assertEquals(Robot.RobotStatus.ALIVE, robot.status());
@@ -33,24 +34,36 @@ class RobotTest {
 
     @Test
     void robotStatusCheckers() {
-        Position position = new Position(0, 0);
-        
         Robot aliveRobot = new Robot(
                 "robot-1",
                 "AliveBot",
-                position,
                 0,
-                50,
+                0,
+                "NORTH",
+                100,
                 100,
                 Robot.RobotStatus.ALIVE,
                 "battle-1"
         );
         
-        Robot destroyedRobot = new Robot(
+        Robot idleRobot = new Robot(
                 "robot-2",
-                "DestroyedBot",
-                position,
+                "IdleBot",
                 0,
+                0,
+                "NORTH",
+                100,
+                100,
+                Robot.RobotStatus.IDLE,
+                "battle-1"
+        );
+        
+        Robot destroyedRobot = new Robot(
+                "robot-3",
+                "DestroyedBot",
+                0,
+                0,
+                "NORTH",
                 0,
                 100,
                 Robot.RobotStatus.DESTROYED,
@@ -58,19 +71,36 @@ class RobotTest {
         );
         
         Robot crashedRobot = new Robot(
-                "robot-3",
+                "robot-4",
                 "CrashedBot",
-                position,
                 0,
-                25,
+                0,
+                "NORTH",
+                50,
                 100,
                 Robot.RobotStatus.CRASHED,
+                "battle-1"
+        );
+        
+        Robot movingRobot = new Robot(
+                "robot-5",
+                "MovingBot",
+                0,
+                0,
+                "NORTH",
+                80,
+                100,
+                Robot.RobotStatus.MOVING,
                 "battle-1"
         );
 
         assertTrue(aliveRobot.isAlive());
         assertFalse(aliveRobot.isDestroyed());
         assertFalse(aliveRobot.isCrashed());
+
+        assertTrue(idleRobot.isAlive());
+        assertFalse(idleRobot.isDestroyed());
+        assertFalse(idleRobot.isCrashed());
 
         assertFalse(destroyedRobot.isAlive());
         assertTrue(destroyedRobot.isDestroyed());
@@ -79,17 +109,20 @@ class RobotTest {
         assertFalse(crashedRobot.isAlive());
         assertFalse(crashedRobot.isDestroyed());
         assertTrue(crashedRobot.isCrashed());
+        
+        assertTrue(movingRobot.isAlive());
+        assertFalse(movingRobot.isDestroyed());
+        assertFalse(movingRobot.isCrashed());
     }
 
     @Test
     void robotHealthPercentage() {
-        Position position = new Position(0, 0);
-        
         Robot fullHealthRobot = new Robot(
                 "robot-1",
-                "FullHealth",
-                position,
+                "FullHealthBot",
                 0,
+                0,
+                "NORTH",
                 100,
                 100,
                 Robot.RobotStatus.ALIVE,
@@ -98,9 +131,10 @@ class RobotTest {
         
         Robot halfHealthRobot = new Robot(
                 "robot-2",
-                "HalfHealth",
-                position,
+                "HalfHealthBot",
                 0,
+                0,
+                "NORTH",
                 50,
                 100,
                 Robot.RobotStatus.ALIVE,
@@ -109,12 +143,13 @@ class RobotTest {
         
         Robot noHealthRobot = new Robot(
                 "robot-3",
-                "NoHealth",
-                position,
+                "NoHealthBot",
                 0,
+                0,
+                "NORTH",
                 0,
                 100,
-                Robot.RobotStatus.DESTROYED,
+                Robot.RobotStatus.ALIVE,
                 "battle-1"
         );
 
@@ -131,10 +166,10 @@ class RobotTest {
         assertNull(robot.robotId());
         assertEquals("TestBot", robot.name());
         assertEquals(new Position(0, 0), robot.position());
-        assertEquals(0, robot.heading());
+        assertEquals("NORTH", robot.heading());
         assertEquals(100, robot.hitPoints());
         assertEquals(100, robot.maxHitPoints());
-        assertEquals(Robot.RobotStatus.ALIVE, robot.status());
+        assertEquals(Robot.RobotStatus.IDLE, robot.status());
         assertNull(robot.battleId());
     }
 
@@ -147,9 +182,9 @@ class RobotTest {
         assertEquals("TestBot", robot.name());
         assertEquals("battle-456", robot.battleId());
         assertEquals(new Position(0, 0), robot.position());
-        assertEquals(0, robot.heading());
+        assertEquals("NORTH", robot.heading());
         assertEquals(100, robot.hitPoints());
         assertEquals(100, robot.maxHitPoints());
-        assertEquals(Robot.RobotStatus.ALIVE, robot.status());
+        assertEquals(Robot.RobotStatus.IDLE, robot.status());
     }
 }

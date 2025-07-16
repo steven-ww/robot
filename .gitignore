@@ -1,6 +1,6 @@
 # Gradle files
-.gradle
-/build/
+.gradle/
+**/build/
 app/build/
 
 # Ignore Gradle GUI config
@@ -9,17 +9,36 @@ gradle-app.setting
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
-# Avoid ignoring Gradle wrappper properties
+# Avoid ignoring Gradle wrapper properties
 !gradle-wrapper.properties
 
 # Cache of project
 .gradletasknamecache
+
+# Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
 
 # Eclipse Gradle plugin generated files
 # Eclipse Core
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+.settings/
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.buildpath
+.recommenders
+.target
+.tern-project
+.texlipse
+.springBeans
+.recommenders/
 
 # Compiled class file
 *.class
@@ -41,6 +60,9 @@ gradle-app.setting
 *.zip
 *.tar.gz
 *.rar
+
+# But keep the gradle wrapper jar
+!gradle/wrapper/gradle-wrapper.jar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
@@ -64,6 +86,22 @@ out/
 /nbdist/
 /.nb-gradle/
 
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+.viminfo
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
 # OS Files
 # macOS
 .DS_Store
@@ -79,16 +117,105 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Linux
-*~
+# (covered above)
 
-# Temporary files
-*.tmp
+# Temporary files (additional patterns)
 *.temp
-*.swp
-*.swo
-*~
+
+# Testing
+# Test results
+/test-results/
+/test-output/
+*.testlog
+.junit/
+
+# Code coverage
+/coverage/
+*.coverage
+*.lcov
+*.exec
+
+# PMD
+/pmd/
+*.pmd
+
+# SpotBugs
+/spotbugs/
+*.spotbugs
+
+# Checkstyle
+/checkstyle/
+*.checkstyle
 
 # Application specific
 /logs/
 /tmp/
 /temp/
+
+# Environment and configuration
+.env
+.env.local
+.env.*.local
+config/local.properties
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Robot Wars project specific
+# Test files and temporary testing artifacts
+test_*.java
+Test*.class
+test_*.txt
+
+# API response/debugging files
+api_response.json
+debug_*.log
+
+# Local development files
+dev.properties
+local.config
+
+# Temporary folders
+tmp/
+temp/
+
+# Generated documentation
+/docs/api/
+/docs/generated/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# System files
+.fuse_hidden*
+.nfs*
+
+# Application logs
+app.log
+application.log
+
+# Additional Java patterns
+# Annotation processing
+.apt_generated
+.apt_generated_test
+
+# Kotlin
+*.kotlin_module
+
+# JMX
+*.jmx
+
+# H2 Database
+*.trace.db
+
+# HSQLDB
+*.lck

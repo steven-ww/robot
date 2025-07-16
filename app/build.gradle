@@ -9,6 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'pmd'
 }
 
 repositories {
@@ -50,6 +51,20 @@ application {
     // Define the main class for the application.
     mainClass = 'za.co.sww.rwars.robot.App'
 }
+
+run {
+    standardInput = System.in
+}
+
+pmd {
+    toolVersion = '7.0.0'
+    consoleOutput = true
+    ruleSetFiles = files("../config/pmd/pmd-ruleset.xml")
+    ruleSets = []
+}
+
+// Add PMD to the check task
+check.dependsOn pmdMain, pmdTest
 
 jar {
     manifest {
