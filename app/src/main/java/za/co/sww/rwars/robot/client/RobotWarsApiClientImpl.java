@@ -31,7 +31,17 @@ public class RobotWarsApiClientImpl implements RobotWarsApiClient {
      * Constructs a new Robot Wars API client implementation.
      */
     public RobotWarsApiClientImpl() {
-        this.httpClient = HttpClient.newHttpClient();
+        this(HttpClient.newHttpClient());
+    }
+    
+    /**
+     * Constructs a new Robot Wars API client implementation with a custom HttpClient.
+     * This constructor is primarily for testing purposes.
+     * 
+     * @param httpClient the HTTP client to use for requests
+     */
+    public RobotWarsApiClientImpl(HttpClient httpClient) {
+        this.httpClient = httpClient;
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
