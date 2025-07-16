@@ -1,19 +1,20 @@
 package za.co.sww.rwars.robot.model;
 
-import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * Represents a Robot Wars battle.
  */
 public record Battle(
-        String battleId,
-        String status,
-        Instant createdAt,
-        Instant startedAt,
-        Instant finishedAt,
-        List<String> robotIds,
-        String winner
+        @JsonProperty("id") String battleId,
+        @JsonProperty("state") String status,
+        LocalDateTime createdAt,
+        LocalDateTime startedAt,
+        LocalDateTime finishedAt,
+        @JsonProperty("robots") List<Robot> robots,
+        @JsonProperty("winnerName") String winner
 ) {
     
     /**
@@ -26,7 +27,7 @@ public record Battle(
         return new Battle(
                 battleId,
                 "WAITING",
-                Instant.now(),
+                LocalDateTime.now(),
                 null,
                 null,
                 List.of(),
@@ -59,5 +60,16 @@ public record Battle(
      */
     public boolean isFinished() {
         return "FINISHED".equals(status);
+    }
+    
+    /**
+     * Gets the robot IDs for backward compatibility.
+     * 
+     * @return a list of robot IDs
+     */
+    public List<String> getRobotIds() {
+        return robots.stream()
+                .map(Robot::robotId)
+                .toList();
     }
 }

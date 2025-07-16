@@ -8,9 +8,11 @@ import za.co.sww.rwars.robot.client.RobotWarsApiClient;
 import za.co.sww.rwars.robot.client.RobotWarsApiException;
 import za.co.sww.rwars.robot.model.Battle;
 import za.co.sww.rwars.robot.model.Robot;
-import za.co.sww.rwars.robot.model.Position;
+import za.co.sww.rwars.robot.model.CreateBattleRequest;
+import za.co.sww.rwars.robot.model.RadarResponse;
+import za.co.sww.rwars.robot.model.LaserResponse;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,38 +39,41 @@ class RobotWarsServiceTest {
     @Test
     void createBattleCallsApiClient() throws RobotWarsApiException {
         // Arrange
+        CreateBattleRequest request = new CreateBattleRequest("TestBattle");
         Battle expectedBattle = new Battle(
                 "battle-123",
                 "WAITING",
-                Instant.now(),
+                LocalDateTime.now(),
                 null,
                 null,
                 List.of(),
                 null
         );
-        when(mockApiClient.createBattle()).thenReturn(expectedBattle);
+        when(mockApiClient.createBattle(request)).thenReturn(expectedBattle);
 
         // Act
-        Battle result = robotWarsService.createBattle();
+        Battle result = robotWarsService.createBattle(request);
 
         // Assert
         assertNotNull(result);
         assertEquals("battle-123", result.battleId());
         assertEquals("WAITING", result.status());
-        verify(mockApiClient).createBattle();
+        verify(mockApiClient).createBattle(request);
     }
 
     @Test
     void getBattleCallsApiClient() throws RobotWarsApiException {
         // Arrange
         String battleId = "battle-123";
+        Robot robot1 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, battleId);
+        Robot robot2 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, battleId);
         Battle expectedBattle = new Battle(
                 battleId,
                 "ACTIVE",
-                Instant.now(),
-                Instant.now(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
                 null,
-                List.of("robot-1", "robot-2"),
+                List.of(robot1, robot2),
                 null
         );
         when(mockApiClient.getBattle(battleId)).thenReturn(expectedBattle);
@@ -91,8 +96,9 @@ class RobotWarsServiceTest {
         Robot expectedRobot = new Robot(
                 "robot-456",
                 robotName,
-                new Position(0, 0),
                 0,
+                0,
+                "NORTH",
                 100,
                 100,
                 Robot.RobotStatus.ALIVE,
@@ -114,41 +120,45 @@ class RobotWarsServiceTest {
     @Test
     void getRobotStateCallsApiClient() throws RobotWarsApiException {
         // Arrange
+        String battleId = "battle-123";
         String robotId = "robot-456";
         Robot expectedRobot = new Robot(
                 robotId,
                 "TestBot",
-                new Position(10, 20),
-                90,
+                10,
+                20,
+                "EAST",
                 75,
                 100,
                 Robot.RobotStatus.ALIVE,
-                "battle-123"
+                battleId
         );
-        when(mockApiClient.getRobotState(robotId)).thenReturn(expectedRobot);
+        when(mockApiClient.getRobotState(battleId, robotId)).thenReturn(expectedRobot);
 
         // Act
-        Robot result = robotWarsService.getRobotState(robotId);
+        Robot result = robotWarsService.getRobotState(battleId, robotId);
 
         // Assert
         assertNotNull(result);
         assertEquals(robotId, result.robotId());
         assertEquals("TestBot", result.name());
         assertEquals(75, result.hitPoints());
-        verify(mockApiClient).getRobotState(robotId);
+        verify(mockApiClient).getRobotState(battleId, robotId);
     }
 
     @Test
     void startBattleCallsApiClient() throws RobotWarsApiException {
         // Arrange
         String battleId = "battle-123";
+        Robot robot1 = new Robot("robot-1", "Robot1", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, battleId);
+        Robot robot2 = new Robot("robot-2", "Robot2", 0, 0, "NORTH", 100, 100, Robot.RobotStatus.ALIVE, battleId);
         Battle expectedBattle = new Battle(
                 battleId,
                 "ACTIVE",
-                Instant.now(),
-                Instant.now(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
                 null,
-                List.of("robot-1", "robot-2"),
+                List.of(robot1, robot2),
                 null
         );
         when(mockApiClient.startBattle(battleId)).thenReturn(expectedBattle);
@@ -166,13 +176,14 @@ class RobotWarsServiceTest {
     @Test
     void createBattleHandlesApiException() throws RobotWarsApiException {
         // Arrange
-        when(mockApiClient.createBattle()).thenThrow(new RobotWarsApiException("API Error"));
+        CreateBattleRequest request = new CreateBattleRequest("TestBattle");
+        when(mockApiClient.createBattle(request)).thenThrow(new RobotWarsApiException("API Error"));
 
         // Act & Assert
         assertThrows(RobotWarsApiException.class, () -> {
-            robotWarsService.createBattle();
+            robotWarsService.createBattle(request);
         });
-        verify(mockApiClient).createBattle();
+        verify(mockApiClient).createBattle(request);
     }
 
     @Test
@@ -190,5 +201,79 @@ class RobotWarsServiceTest {
         assertEquals("Registration failed", exception.getMessage());
         assertEquals(400, exception.getStatusCode());
         verify(mockApiClient).registerRobot(battleId, robotName);
+    }
+
+    @Test
+    void moveRobotCallsApiClient() throws RobotWarsApiException {
+        // Arrange
+        String battleId = "battle-123";
+        String robotId = "robot-456";
+        String direction = "NORTH";
+        int blocks = 5;
+        Robot expectedRobot = new Robot(
+                robotId,
+                "TestBot",
+                0,
+                5,
+                "NORTH",
+                100,
+                100,
+                Robot.RobotStatus.ALIVE,
+                battleId
+        );
+        when(mockApiClient.moveRobot(battleId, robotId, direction, blocks)).thenReturn(expectedRobot);
+
+        // Act
+        Robot result = robotWarsService.moveRobot(battleId, robotId, direction, blocks);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(robotId, result.robotId());
+        assertEquals(0, result.position().x());
+        assertEquals(5, result.position().y());
+        verify(mockApiClient).moveRobot(battleId, robotId, direction, blocks);
+    }
+
+    @Test
+    void scanRadarCallsApiClient() throws RobotWarsApiException {
+        // Arrange
+        String battleId = "battle-123";
+        String robotId = "robot-456";
+        int range = 10;
+        RadarResponse expectedResponse = new RadarResponse();
+        expectedResponse.setRange(range);
+        when(mockApiClient.scanRadar(battleId, robotId, range)).thenReturn(expectedResponse);
+
+        // Act
+        RadarResponse result = robotWarsService.scanRadar(battleId, robotId, range);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(range, result.getRange());
+        verify(mockApiClient).scanRadar(battleId, robotId, range);
+    }
+
+    @Test
+    void fireLaserCallsApiClient() throws RobotWarsApiException {
+        // Arrange
+        String battleId = "battle-123";
+        String robotId = "robot-456";
+        String direction = "EAST";
+        int range = 20;
+        LaserResponse expectedResponse = new LaserResponse();
+        expectedResponse.setHit(true);
+        expectedResponse.setDirection(direction);
+        expectedResponse.setRange(range);
+        when(mockApiClient.fireLaser(battleId, robotId, direction, range)).thenReturn(expectedResponse);
+
+        // Act
+        LaserResponse result = robotWarsService.fireLaser(battleId, robotId, direction, range);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isHit());
+        assertEquals(direction, result.getDirection());
+        assertEquals(range, result.getRange());
+        verify(mockApiClient).fireLaser(battleId, robotId, direction, range);
     }
 }

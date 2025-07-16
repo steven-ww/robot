@@ -5,7 +5,9 @@ package za.co.sww.rwars.robot.client;
  */
 public class RobotWarsApiException extends Exception {
     
+    private static final long serialVersionUID = 1L;
     private final int statusCode;
+    private final String serverMessage;
     
     /**
      * Creates a new RobotWarsApiException with the given message.
@@ -15,6 +17,7 @@ public class RobotWarsApiException extends Exception {
     public RobotWarsApiException(String message) {
         super(message);
         this.statusCode = 0;
+        this.serverMessage = null;
     }
     
     /**
@@ -26,6 +29,7 @@ public class RobotWarsApiException extends Exception {
     public RobotWarsApiException(String message, Throwable cause) {
         super(message, cause);
         this.statusCode = 0;
+        this.serverMessage = null;
     }
     
     /**
@@ -37,6 +41,20 @@ public class RobotWarsApiException extends Exception {
     public RobotWarsApiException(String message, int statusCode) {
         super(message);
         this.statusCode = statusCode;
+        this.serverMessage = null;
+    }
+    
+    /**
+     * Creates a new RobotWarsApiException with the given message, status code, and server message.
+     * 
+     * @param message the error message
+     * @param statusCode the HTTP status code
+     * @param serverMessage the error message from the server
+     */
+    public RobotWarsApiException(String message, int statusCode, String serverMessage) {
+        super(message);
+        this.statusCode = statusCode;
+        this.serverMessage = serverMessage;
     }
     
     /**
@@ -46,5 +64,14 @@ public class RobotWarsApiException extends Exception {
      */
     public int getStatusCode() {
         return statusCode;
+    }
+    
+    /**
+     * Gets the server error message associated with this exception.
+     * 
+     * @return the server message, or null if not available
+     */
+    public String getServerMessage() {
+        return serverMessage;
     }
 }

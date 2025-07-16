@@ -1,16 +1,19 @@
 package za.co.sww.rwars.robot.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Represents a Robot in the Robot Wars game.
  */
 public record Robot(
-        String robotId,
+        @JsonProperty("id") String robotId,
         String name,
-        Position position,
-        int heading,
+        @JsonProperty("positionX") int positionX,
+        @JsonProperty("positionY") int positionY,
+        @JsonProperty("direction") String heading,
         int hitPoints,
         int maxHitPoints,
-        RobotStatus status,
+        @JsonProperty("status") RobotStatus status,
         String battleId
 ) {
     
@@ -18,9 +21,20 @@ public record Robot(
      * Robot status enumeration.
      */
     public enum RobotStatus {
+        IDLE,
         ALIVE,
+        MOVING,
         DESTROYED,
         CRASHED
+    }
+    
+    /**
+     * Gets the robot's position as a Position object.
+     * 
+     * @return the robot's position
+     */
+    public Position position() {
+        return new Position(positionX, positionY);
     }
     
     /**
@@ -33,11 +47,12 @@ public record Robot(
         return new Robot(
                 null,
                 name,
-                new Position(0, 0),
                 0,
+                0,
+                "NORTH",
                 100,
                 100,
-                RobotStatus.ALIVE,
+                RobotStatus.IDLE,
                 null
         );
     }
@@ -54,11 +69,12 @@ public record Robot(
         return new Robot(
                 robotId,
                 name,
-                new Position(0, 0),
                 0,
+                0,
+                "NORTH",
                 100,
                 100,
-                RobotStatus.ALIVE,
+                RobotStatus.IDLE,
                 battleId
         );
     }
@@ -69,7 +85,7 @@ public record Robot(
      * @return true if the robot is alive
      */
     public boolean isAlive() {
-        return status == RobotStatus.ALIVE;
+        return status == RobotStatus.ALIVE || status == RobotStatus.IDLE || status == RobotStatus.MOVING;
     }
     
     /**

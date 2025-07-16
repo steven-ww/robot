@@ -8,6 +8,9 @@ import za.co.sww.rwars.robot.client.RobotWarsApiClientImpl;
 import za.co.sww.rwars.robot.client.RobotWarsApiException;
 import za.co.sww.rwars.robot.model.Battle;
 import za.co.sww.rwars.robot.model.Robot;
+import za.co.sww.rwars.robot.model.CreateBattleRequest;
+import za.co.sww.rwars.robot.model.RadarResponse;
+import za.co.sww.rwars.robot.model.LaserResponse;
 import za.co.sww.rwars.robot.service.RobotWarsService;
 
 import java.util.Scanner;
@@ -19,6 +22,8 @@ public class App {
     
     private final RobotWarsService robotWarsService;
     private final Scanner scanner;
+    private String currentBattleId;
+    private String currentRobotId;
     
     /**
      * Creates a new App instance.
@@ -67,8 +72,12 @@ public class App {
                     case 1 -> createBattle();
                     case 2 -> registerRobot();
                     case 3 -> startBattle();
-                    case 4 -> getBattleStatus();
-                    case 5 -> getRobotStatus();
+                    case 4 -> showBattleStatus();
+                    case 5 -> showRobotStatus();
+                    case 6 -> moveRobot();
+                    case 7 -> scanRadar();
+                    case 8 -> fireLaser();
+                    case 9 -> resetState();
                     case 0 -> {
                         running = false;
                         System.out.println("Goodbye!");
@@ -93,11 +102,21 @@ public class App {
      */
     private void displayMenu() {
         System.out.println("\n=== Robot Wars Menu ===");
-        System.out.println("1. Create Battle");
+        if (currentBattleId != null) {
+            System.out.println("Current Battle ID: " + currentBattleId);
+        }
+        if (currentRobotId != null) {
+            System.out.println("Current Robot ID: " + currentRobotId);
+        }
+        System.out.println("\n1. Create Battle");
         System.out.println("2. Register Robot");
         System.out.println("3. Start Battle");
         System.out.println("4. Get Battle Status");
         System.out.println("5. Get Robot Status");
+        System.out.println("6. Move Robot");
+        System.out.println("7. Scan Radar");
+        System.out.println("8. Fire Laser");
+        System.out.println("9. Reset Current Battle/Robot");
         System.out.println("0. Exit");
         System.out.print("\nChoose an option: ");
     }
@@ -108,7 +127,67 @@ public class App {
     private void createBattle() {
         try {
             System.out.println("\nCreating new battle...");
-            Battle battle = robotWarsService.createBattle();
+            
+            // Get required battle name
+            System.out.print("Enter battle name: ");
+            String battleName = scanner.nextLine().trim();
+            
+            if (battleName.isEmpty()) {
+                System.out.println("Battle name cannot be empty.");
+                return;
+            }
+            
+            CreateBattleRequest request = new CreateBattleRequest(battleName);
+            
+            // Get optional parameters
+            System.out.print("Enter arena width (10-100, press Enter for default): ");
+            String widthStr = scanner.nextLine().trim();
+            if (!widthStr.isEmpty()) {
+                try {
+                    int width = Integer.parseInt(widthStr);
+                    if (width >= 10 && width <= 100) {
+                        request.setWidth(width);
+                    } else {
+                        System.out.println("Width must be between 10 and 100. Using default.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid width. Using default.");
+                }
+            }
+            
+            System.out.print("Enter arena height (10-100, press Enter for default): ");
+            String heightStr = scanner.nextLine().trim();
+            if (!heightStr.isEmpty()) {
+                try {
+                    int height = Integer.parseInt(heightStr);
+                    if (height >= 10 && height <= 100) {
+                        request.setHeight(height);
+                    } else {
+                        System.out.println("Height must be between 10 and 100. Using default.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid height. Using default.");
+                }
+            }
+            
+            System.out.print("Enter robot movement time seconds (0.1-10.0, press Enter for default): ");
+            String timeStr = scanner.nextLine().trim();
+            if (!timeStr.isEmpty()) {
+                try {
+                    double time = Double.parseDouble(timeStr);
+                    if (time >= 0.1 && time <= 10.0) {
+                        request.setRobotMovementTimeSeconds(time);
+                    } else {
+                        System.out.println("Movement time must be between 0.1 and 10.0. Using default.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid movement time. Using default.");
+                }
+            }
+            
+            Battle battle = robotWarsService.createBattle(request);
+            currentBattleId = battle.battleId();
+            currentRobotId = null; // Reset robot ID when creating new battle
             System.out.println("Battle created successfully!");
             System.out.println("Battle ID: " + battle.battleId());
             System.out.println("Status: " + battle.status());
@@ -118,6 +197,9 @@ public class App {
             if (e.getStatusCode() > 0) {
                 System.err.println("HTTP Status Code: " + e.getStatusCode());
             }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
         }
     }
     
@@ -126,12 +208,19 @@ public class App {
      */
     private void registerRobot() {
         try {
-            System.out.print("\nEnter battle ID: ");
-            String battleId = scanner.nextLine().trim();
+            String battleId = currentBattleId;
             
-            if (battleId.isEmpty()) {
-                System.out.println("Battle ID cannot be empty.");
-                return;
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
             }
             
             System.out.print("Enter robot name: ");
@@ -144,6 +233,8 @@ public class App {
             
             System.out.println("Registering robot '" + robotName + "' to battle " + battleId + "...");
             Robot robot = robotWarsService.registerRobot(battleId, robotName);
+            currentBattleId = battleId; // Update current battle ID
+            currentRobotId = robot.robotId(); // Set current robot ID
             System.out.println("Robot registered successfully!");
             System.out.println("Robot ID: " + robot.robotId());
             System.out.println("Name: " + robot.name());
@@ -154,6 +245,9 @@ public class App {
             if (e.getStatusCode() > 0) {
                 System.err.println("HTTP Status Code: " + e.getStatusCode());
             }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
         }
     }
     
@@ -162,48 +256,67 @@ public class App {
      */
     private void startBattle() {
         try {
-            System.out.print("\nEnter battle ID to start: ");
-            String battleId = scanner.nextLine().trim();
+            String battleId = currentBattleId;
             
-            if (battleId.isEmpty()) {
-                System.out.println("Battle ID cannot be empty.");
-                return;
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID to start: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
             }
             
             System.out.println("Starting battle " + battleId + "...");
             Battle battle = robotWarsService.startBattle(battleId);
+            currentBattleId = battleId; // Update current battle ID
             System.out.println("Battle started successfully!");
             System.out.println("Battle ID: " + battle.battleId());
             System.out.println("Status: " + battle.status());
-            System.out.println("Robots in battle: " + battle.robotIds().size());
+            System.out.println("Robots in battle: " + battle.getRobotIds().size());
         } catch (RobotWarsApiException e) {
             System.err.println("Failed to start battle: " + e.getMessage());
             if (e.getStatusCode() > 0) {
                 System.err.println("HTTP Status Code: " + e.getStatusCode());
             }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
         }
     }
     
     /**
-     * Gets the status of a battle.
+     * Shows the status of a battle.
      */
-    private void getBattleStatus() {
+    private void showBattleStatus() {
         try {
-            System.out.print("\nEnter battle ID: ");
-            String battleId = scanner.nextLine().trim();
+            String battleId = currentBattleId;
             
-            if (battleId.isEmpty()) {
-                System.out.println("Battle ID cannot be empty.");
-                return;
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
             }
             
             System.out.println("Getting battle status...");
             Battle battle = robotWarsService.getBattle(battleId);
+            currentBattleId = battleId; // Update current battle ID
             System.out.println("Battle Status:");
             System.out.println("  ID: " + battle.battleId());
             System.out.println("  Status: " + battle.status());
             System.out.println("  Created: " + battle.createdAt());
-            System.out.println("  Robots: " + battle.robotIds().size());
+            System.out.println("  Robots: " + battle.getRobotIds().size());
             if (battle.winner() != null) {
                 System.out.println("  Winner: " + battle.winner());
             }
@@ -212,24 +325,50 @@ public class App {
             if (e.getStatusCode() > 0) {
                 System.err.println("HTTP Status Code: " + e.getStatusCode());
             }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
         }
     }
     
     /**
-     * Gets the status of a robot.
+     * Shows the status of a robot.
      */
-    private void getRobotStatus() {
+    private void showRobotStatus() {
         try {
-            System.out.print("\nEnter robot ID: ");
-            String robotId = scanner.nextLine().trim();
+            String battleId = currentBattleId;
+            String robotId = currentRobotId;
             
-            if (robotId.isEmpty()) {
-                System.out.println("Robot ID cannot be empty.");
-                return;
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
+            }
+            
+            // Ask for robot ID only if we don't have one
+            if (robotId == null) {
+                System.out.print("Enter robot ID: ");
+                robotId = scanner.nextLine().trim();
+                
+                if (robotId.isEmpty()) {
+                    System.out.println("Robot ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("Using current robot ID: " + robotId);
             }
             
             System.out.println("Getting robot status...");
-            Robot robot = robotWarsService.getRobotState(robotId);
+            Robot robot = robotWarsService.getRobotState(battleId, robotId);
+            currentBattleId = battleId; // Update current battle ID
+            currentRobotId = robotId; // Update current robot ID
             System.out.println("Robot Status:");
             System.out.println("  ID: " + robot.robotId());
             System.out.println("  Name: " + robot.name());
@@ -244,6 +383,452 @@ public class App {
             if (e.getStatusCode() > 0) {
                 System.err.println("HTTP Status Code: " + e.getStatusCode());
             }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
+        }
+    }
+    
+    /**
+     * Moves the robot.
+     */
+    private void moveRobot() {
+        try {
+            String battleId = currentBattleId;
+            String robotId = currentRobotId;
+            
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
+            }
+            
+            // Get battle information to show available robots
+            System.out.println("Getting battle information...");
+            Battle battle = robotWarsService.getBattle(battleId);
+            
+            if (battle.robots().isEmpty()) {
+                System.out.println("No robots found in this battle.");
+                return;
+            }
+            
+            // Show available robots and let user select
+            if (robotId == null || !isRobotInBattle(robotId, battle)) {
+                robotId = selectRobotFromBattle(battle);
+                if (robotId == null) {
+                    return; // User cancelled selection
+                }
+            } else {
+                // Show current robot info
+                final String finalRobotId = robotId;
+                Robot currentRobot = battle.robots().stream()
+                    .filter(r -> r.robotId().equals(finalRobotId))
+                    .findFirst()
+                    .orElse(null);
+                
+                if (currentRobot != null) {
+                    System.out.println("Using current robot: " + currentRobot.name() + 
+                                     " (" + currentRobot.robotId() + ") at position (" + 
+                                     currentRobot.positionX() + ", " + currentRobot.positionY() + ")");
+                    
+                    System.out.print("Use this robot? (y/n): ");
+                    String choice = scanner.nextLine().trim().toLowerCase();
+                    
+                    if (!choice.equals("y") && !choice.equals("yes")) {
+                        robotId = selectRobotFromBattle(battle);
+                        if (robotId == null) {
+                            return; // User cancelled selection
+                        }
+                    }
+                } else {
+                    System.out.println("Current robot ID not found in battle. Please select a robot.");
+                    robotId = selectRobotFromBattle(battle);
+                    if (robotId == null) {
+                        return; // User cancelled selection
+                    }
+                }
+            }
+            
+            // Get direction
+            System.out.println("Available directions: NORTH, SOUTH, EAST, WEST, NE, NW, SE, SW");
+            System.out.print("Enter direction to move: ");
+            String direction = scanner.nextLine().trim().toUpperCase();
+            
+            if (direction.isEmpty()) {
+                System.out.println("Direction cannot be empty.");
+                return;
+            }
+            
+            // Get blocks to move
+            System.out.print("Enter number of blocks to move (1-10): ");
+            String blocksStr = scanner.nextLine().trim();
+            
+            if (blocksStr.isEmpty()) {
+                System.out.println("Number of blocks cannot be empty.");
+                return;
+            }
+            
+            int blocks;
+            try {
+                blocks = Integer.parseInt(blocksStr);
+                if (blocks < 1 || blocks > 10) {
+                    System.out.println("Number of blocks must be between 1 and 10.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number of blocks.");
+                return;
+            }
+            
+            System.out.println("Moving robot...");
+            Robot robot = robotWarsService.moveRobot(battleId, robotId, direction, blocks);
+            currentBattleId = battleId;
+            currentRobotId = robotId;
+            System.out.println("Robot moved successfully!");
+            System.out.println("Robot Status: " + robot.status());
+            System.out.println("Hit Points: " + robot.hitPoints());
+            System.out.println("Position: (" + robot.position().x() + ", " + robot.position().y() + ")");
+            
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to move robot: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
+        }
+    }
+    
+    /**
+     * Scans radar.
+     */
+    private void scanRadar() {
+        try {
+            String battleId = currentBattleId;
+            String robotId = currentRobotId;
+            
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
+            }
+            
+            // Get battle information to show available robots
+            System.out.println("Getting battle information...");
+            Battle battle = robotWarsService.getBattle(battleId);
+            
+            if (battle.robots().isEmpty()) {
+                System.out.println("No robots found in this battle.");
+                return;
+            }
+            
+            // Show available robots and let user select
+            if (robotId == null || !isRobotInBattle(robotId, battle)) {
+                robotId = selectRobotFromBattle(battle);
+                if (robotId == null) {
+                    return; // User cancelled selection
+                }
+            } else {
+                // Show current robot info
+                final String finalRobotId = robotId;
+                Robot currentRobot = battle.robots().stream()
+                    .filter(r -> r.robotId().equals(finalRobotId))
+                    .findFirst()
+                    .orElse(null);
+                
+                if (currentRobot != null) {
+                    System.out.println("Using current robot: " + currentRobot.name() + 
+                                     " (" + currentRobot.robotId() + ") for radar scan");
+                    
+                    System.out.print("Use this robot? (y/n): ");
+                    String choice = scanner.nextLine().trim().toLowerCase();
+                    
+                    if (!choice.equals("y") && !choice.equals("yes")) {
+                        robotId = selectRobotFromBattle(battle);
+                        if (robotId == null) {
+                            return; // User cancelled selection
+                        }
+                    }
+                } else {
+                    System.out.println("Current robot ID not found in battle. Please select a robot.");
+                    robotId = selectRobotFromBattle(battle);
+                    if (robotId == null) {
+                        return; // User cancelled selection
+                    }
+                }
+            }
+            
+            // Get scan range
+            System.out.print("Enter radar scan range (1-20): ");
+            String rangeStr = scanner.nextLine().trim();
+            
+            if (rangeStr.isEmpty()) {
+                System.out.println("Range cannot be empty.");
+                return;
+            }
+            
+            int range;
+            try {
+                range = Integer.parseInt(rangeStr);
+                if (range < 1 || range > 20) {
+                    System.out.println("Range must be between 1 and 20.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid range.");
+                return;
+            }
+            
+            System.out.println("Scanning radar...");
+            RadarResponse response = robotWarsService.scanRadar(battleId, robotId, range);
+            currentBattleId = battleId;
+            currentRobotId = robotId;
+            System.out.println("Radar scan completed!");
+            System.out.println("Scan Range: " + response.getRange());
+            System.out.println("Detections: " + response.getDetections().size());
+            
+            if (!response.getDetections().isEmpty()) {
+                System.out.println("\nDetections:");
+                for (int i = 0; i < response.getDetections().size(); i++) {
+                    var detection = response.getDetections().get(i);
+                    System.out.println("  " + (i + 1) + ". Type: " + detection.getType() + 
+                                     ", Position: (" + detection.getX() + ", " + detection.getY() + ")");
+                    if (detection.getDetails() != null) {
+                        System.out.println("     Details: " + detection.getDetails());
+                    }
+                }
+            }
+            
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to scan radar: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
+        }
+    }
+    
+    /**
+     * Fires laser.
+     */
+    private void fireLaser() {
+        try {
+            String battleId = currentBattleId;
+            String robotId = currentRobotId;
+            
+            // Ask for battle ID only if we don't have one
+            if (battleId == null) {
+                System.out.print("\nEnter battle ID: ");
+                battleId = scanner.nextLine().trim();
+                
+                if (battleId.isEmpty()) {
+                    System.out.println("Battle ID cannot be empty.");
+                    return;
+                }
+            } else {
+                System.out.println("\nUsing current battle ID: " + battleId);
+            }
+            
+            // Get battle information to show available robots
+            System.out.println("Getting battle information...");
+            Battle battle = robotWarsService.getBattle(battleId);
+            
+            if (battle.robots().isEmpty()) {
+                System.out.println("No robots found in this battle.");
+                return;
+            }
+            
+            // Show available robots and let user select
+            if (robotId == null || !isRobotInBattle(robotId, battle)) {
+                robotId = selectRobotFromBattle(battle);
+                if (robotId == null) {
+                    return; // User cancelled selection
+                }
+            } else {
+                // Show current robot info
+                final String finalRobotId = robotId;
+                Robot currentRobot = battle.robots().stream()
+                    .filter(r -> r.robotId().equals(finalRobotId))
+                    .findFirst()
+                    .orElse(null);
+                
+                if (currentRobot != null) {
+                    System.out.println("Using current robot: " + currentRobot.name() + 
+                                     " (" + currentRobot.robotId() + ") for laser firing");
+                    
+                    System.out.print("Use this robot? (y/n): ");
+                    String choice = scanner.nextLine().trim().toLowerCase();
+                    
+                    if (!choice.equals("y") && !choice.equals("yes")) {
+                        robotId = selectRobotFromBattle(battle);
+                        if (robotId == null) {
+                            return; // User cancelled selection
+                        }
+                    }
+                } else {
+                    System.out.println("Current robot ID not found in battle. Please select a robot.");
+                    robotId = selectRobotFromBattle(battle);
+                    if (robotId == null) {
+                        return; // User cancelled selection
+                    }
+                }
+            }
+            
+            // Get direction
+            System.out.println("Available directions: NORTH, SOUTH, EAST, WEST, NE, NW, SE, SW");
+            System.out.print("Enter direction to fire: ");
+            String direction = scanner.nextLine().trim().toUpperCase();
+            
+            if (direction.isEmpty()) {
+                System.out.println("Direction cannot be empty.");
+                return;
+            }
+            
+            // Get firing range
+            System.out.print("Enter laser range (1-50): ");
+            String rangeStr = scanner.nextLine().trim();
+            
+            if (rangeStr.isEmpty()) {
+                System.out.println("Range cannot be empty.");
+                return;
+            }
+            
+            int range;
+            try {
+                range = Integer.parseInt(rangeStr);
+                if (range < 1 || range > 50) {
+                    System.out.println("Range must be between 1 and 50.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid range.");
+                return;
+            }
+            
+            System.out.println("Firing laser...");
+            LaserResponse response = robotWarsService.fireLaser(battleId, robotId, direction, range);
+            currentBattleId = battleId;
+            currentRobotId = robotId;
+            System.out.println("Laser fired!");
+            System.out.println("Hit: " + response.isHit());
+            System.out.println("Direction: " + response.getDirection());
+            System.out.println("Range: " + response.getRange());
+            
+            if (response.isHit()) {
+                System.out.println("Hit Robot ID: " + response.getHitRobotId());
+                System.out.println("Hit Robot Name: " + response.getHitRobotName());
+                System.out.println("Damage Dealt: " + response.getDamageDealt());
+                if (response.getHitPosition() != null) {
+                    System.out.println("Hit Position: (" + response.getHitPosition().x() + ", " + response.getHitPosition().y() + ")");
+                }
+            } else {
+                System.out.println("Laser missed or was blocked");
+                if (response.getBlockedBy() != null) {
+                    System.out.println("Blocked by: " + response.getBlockedBy());
+                }
+            }
+            
+        } catch (RobotWarsApiException e) {
+            System.err.println("Failed to fire laser: " + e.getMessage());
+            if (e.getStatusCode() > 0) {
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+            }
+            if (e.getServerMessage() != null) {
+                System.err.println("Server Error: " + e.getServerMessage());
+            }
+        }
+    }
+    
+    /**
+     * Resets the current battle and robot state.
+     */
+    private void resetState() {
+        currentBattleId = null;
+        currentRobotId = null;
+        System.out.println("\nCurrent battle and robot state have been reset.");
+    }
+    
+    /**
+     * Checks if a robot ID exists in the battle.
+     * 
+     * @param robotId the robot ID to check
+     * @param battle the battle to check
+     * @return true if the robot exists in the battle
+     */
+    private boolean isRobotInBattle(String robotId, Battle battle) {
+        return battle.robots().stream()
+                .anyMatch(robot -> robot.robotId().equals(robotId));
+    }
+    
+    /**
+     * Allows the user to select a robot from the available robots in the battle.
+     * 
+     * @param battle the battle containing the robots
+     * @return the selected robot ID, or null if cancelled
+     */
+    private String selectRobotFromBattle(Battle battle) {
+        System.out.println("\nAvailable robots in battle:");
+        
+        for (int i = 0; i < battle.robots().size(); i++) {
+            Robot robot = battle.robots().get(i);
+            System.out.printf("%d. %s (%s)%n", 
+                i + 1, 
+                robot.name(), 
+                robot.robotId());
+            System.out.printf("   Status: %s, HP: %d/%d, Position: (%d, %d), Facing: %s%n",
+                robot.status(),
+                robot.hitPoints(),
+                robot.maxHitPoints(),
+                robot.positionX(),
+                robot.positionY(),
+                robot.heading());
+        }
+        
+        System.out.print("\nSelect robot (1-" + battle.robots().size() + ") or 0 to cancel: ");
+        String choiceStr = scanner.nextLine().trim();
+        
+        if (choiceStr.isEmpty()) {
+            System.out.println("No selection made.");
+            return null;
+        }
+        
+        try {
+            int choice = Integer.parseInt(choiceStr);
+            
+            if (choice == 0) {
+                System.out.println("Selection cancelled.");
+                return null;
+            }
+            
+            if (choice < 1 || choice > battle.robots().size()) {
+                System.out.println("Invalid selection. Please choose a number between 1 and " + battle.robots().size() + ".");
+                return null;
+            }
+            
+            Robot selectedRobot = battle.robots().get(choice - 1);
+            System.out.println("Selected robot: " + selectedRobot.name() + " (" + selectedRobot.robotId() + ")");
+            return selectedRobot.robotId();
+            
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            return null;
         }
     }
 }

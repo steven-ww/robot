@@ -2,8 +2,7 @@ package za.co.sww.rwars.robot.client;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import za.co.sww.rwars.robot.model.Battle;
-import za.co.sww.rwars.robot.model.Robot;
+import za.co.sww.rwars.robot.model.CreateBattleRequest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,8 +38,9 @@ class RobotWarsApiClientImplTest {
     void createBattleMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
-            apiClient.createBattle();
+        CreateBattleRequest request = new CreateBattleRequest("TestBattle");
+        assertThrows(RobotWarsApiException.class, () -> {
+            apiClient.createBattle(request);
         });
     }
 
@@ -48,7 +48,7 @@ class RobotWarsApiClientImplTest {
     void getBattleMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
+        assertThrows(RobotWarsApiException.class, () -> {
             apiClient.getBattle("test-battle-id");
         });
     }
@@ -57,7 +57,7 @@ class RobotWarsApiClientImplTest {
     void registerRobotMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
+        assertThrows(RobotWarsApiException.class, () -> {
             apiClient.registerRobot("test-battle-id", "test-robot");
         });
     }
@@ -66,8 +66,8 @@ class RobotWarsApiClientImplTest {
     void getRobotStateMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
-            apiClient.getRobotState("test-robot-id");
+        assertThrows(RobotWarsApiException.class, () -> {
+            apiClient.getRobotState("test-battle-id", "test-robot-id");
         });
     }
 
@@ -75,8 +75,8 @@ class RobotWarsApiClientImplTest {
     void moveRobotMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
-            apiClient.moveRobot("test-robot-id", 90, 10);
+        assertThrows(RobotWarsApiException.class, () -> {
+            apiClient.moveRobot("test-battle-id", "test-robot-id", "NORTH", 10);
         });
     }
 
@@ -84,8 +84,8 @@ class RobotWarsApiClientImplTest {
     void scanRadarMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
-            apiClient.scanRadar("test-robot-id", 45, 100);
+        assertThrows(RobotWarsApiException.class, () -> {
+            apiClient.scanRadar("test-battle-id", "test-robot-id", 100);
         });
     }
 
@@ -93,8 +93,8 @@ class RobotWarsApiClientImplTest {
     void fireLaserMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
-            apiClient.fireLaser("test-robot-id", 180, 50);
+        assertThrows(RobotWarsApiException.class, () -> {
+            apiClient.fireLaser("test-battle-id", "test-robot-id", "SOUTH", 50);
         });
     }
 
@@ -102,7 +102,7 @@ class RobotWarsApiClientImplTest {
     void startBattleMethodExists() {
         // This test verifies the method exists and can be called
         // In a real test, we'd mock the HTTP response
-        assertThrows(Exception.class, () -> {
+        assertThrows(RobotWarsApiException.class, () -> {
             apiClient.startBattle("test-battle-id");
         });
     }

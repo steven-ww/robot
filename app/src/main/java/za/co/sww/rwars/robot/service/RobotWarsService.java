@@ -4,6 +4,9 @@ import za.co.sww.rwars.robot.client.RobotWarsApiClient;
 import za.co.sww.rwars.robot.client.RobotWarsApiException;
 import za.co.sww.rwars.robot.model.Battle;
 import za.co.sww.rwars.robot.model.Robot;
+import za.co.sww.rwars.robot.model.CreateBattleRequest;
+import za.co.sww.rwars.robot.model.RadarResponse;
+import za.co.sww.rwars.robot.model.LaserResponse;
 
 /**
  * Service class to handle robot wars game operations.
@@ -24,11 +27,12 @@ public class RobotWarsService {
     /**
      * Creates a new battle.
      * 
+     * @param request the battle creation request
      * @return the created battle
      * @throws RobotWarsApiException if the API call fails
      */
-    public Battle createBattle() throws RobotWarsApiException {
-        return apiClient.createBattle();
+    public Battle createBattle(CreateBattleRequest request) throws RobotWarsApiException {
+        return apiClient.createBattle(request);
     }
     
     /**
@@ -68,11 +72,53 @@ public class RobotWarsService {
     /**
      * Gets the current state of a robot.
      * 
+     * @param battleId the battle ID
      * @param robotId the robot ID
      * @return the robot state
      * @throws RobotWarsApiException if the API call fails
      */
-    public Robot getRobotState(String robotId) throws RobotWarsApiException {
-        return apiClient.getRobotState(robotId);
+    public Robot getRobotState(String battleId, String robotId) throws RobotWarsApiException {
+        return apiClient.getRobotState(battleId, robotId);
+    }
+    
+    /**
+     * Moves a robot in the specified direction.
+     * 
+     * @param battleId the battle ID
+     * @param robotId the robot ID
+     * @param direction the direction to move
+     * @param blocks the number of blocks to move
+     * @return the updated robot state
+     * @throws RobotWarsApiException if the API call fails
+     */
+    public Robot moveRobot(String battleId, String robotId, String direction, int blocks) throws RobotWarsApiException {
+        return apiClient.moveRobot(battleId, robotId, direction, blocks);
+    }
+    
+    /**
+     * Performs a radar scan.
+     * 
+     * @param battleId the battle ID
+     * @param robotId the robot ID
+     * @param range the scan range
+     * @return the radar response
+     * @throws RobotWarsApiException if the API call fails
+     */
+    public RadarResponse scanRadar(String battleId, String robotId, int range) throws RobotWarsApiException {
+        return apiClient.scanRadar(battleId, robotId, range);
+    }
+    
+    /**
+     * Fires a laser.
+     * 
+     * @param battleId the battle ID
+     * @param robotId the robot ID
+     * @param direction the direction to fire
+     * @param range the firing range
+     * @return the laser response
+     * @throws RobotWarsApiException if the API call fails
+     */
+    public LaserResponse fireLaser(String battleId, String robotId, String direction, int range) throws RobotWarsApiException {
+        return apiClient.fireLaser(battleId, robotId, direction, range);
     }
 }
